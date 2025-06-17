@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CartItemRequest;
+use App\Http\Requests\CreateCartItemRequest;
+use App\Http\Requests\UpdateCartItemRequest;
 use App\Http\Resources\CartItemResource;
 use App\Models\CartItems;
 use App\Models\Items;
@@ -26,17 +27,9 @@ class CartItemsController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
-    public function store(CartItemRequest $request)
+    public function store(CreateCartItemRequest $request)
     {
         $item = $this->cartItems->createItem($request->validated());
 
@@ -60,19 +53,15 @@ class CartItemsController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateCartItemRequest $request, string $id)
     {
-        //
+        $item = $this->cartItems->updateItem($id, $request->validated());
+
+        return (new CartItemResource($item))
+            ->response()
+            ->header('Location', route('cart-items.show', $item->id));
     }
 
     /**

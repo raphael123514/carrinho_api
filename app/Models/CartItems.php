@@ -38,4 +38,19 @@ class CartItems extends Model
     {
         return static::create($validatedData);
     }
+
+    /**
+     * Update a cart item
+     *
+     * @param string $id
+     * @param array $validatedData
+     * @return \App\Models\CartItems
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function updateItem(string $id, array $validatedData): self
+    {
+        $item = $this->findItem($id);
+        $item->update($validatedData);
+        return $item->fresh();
+    }
 }
