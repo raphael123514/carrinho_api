@@ -76,9 +76,14 @@ class CartItemsController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     *
+     * @param string $id
+     * @return \Illuminate\Http\Response
      */
     public function destroy(string $id)
     {
-        //
+        $this->cartItems->deleteItem($id);
+        
+        return response()->noContent();
     }
 }

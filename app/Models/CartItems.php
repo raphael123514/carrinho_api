@@ -55,6 +55,19 @@ class CartItems extends Model
     }
 
     /**
+     * Delete a cart item
+     *
+     * @param string $id
+     * @return bool
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function deleteItem(string $id): bool
+    {
+        $item = $this->findItem($id);
+        return $item->delete();
+    }
+
+    /**
      * Get all cart items with pagination
      *
      * @param int $perPage

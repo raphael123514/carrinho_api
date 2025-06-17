@@ -305,7 +305,32 @@ class CartItemsControllerTest extends TestCase
             ]
         ];
     }
+    
+    public function test_destroy_deletes_item_successfully(): void
+    {
+        // Create an item first
+        $createResponse = $this->postJson('/api/cart-items', $this->validData);
+        $itemId = $createResponse->json('data.id');
+    
+        // Delete the item
+        $deleteResponse = $this->deleteJson('/api/cart-items/' . $itemId);
+    
+        $deleteResponse->assertNoContent();
+    
+        // Ensure the item no longer exists
+        $this->getJson('/api/cart-items/' . $itemId)
+            ->assertStatus(404);
+    }
+    
+    public function test_destroy_returns_404_for_nonexistent_item(): void
+    {
+        $nonExistentId = 999999;
+        $response = $this->deleteJson('/api/cart-items/' . $nonExistentId);
+    
+        $response->assertStatus(404);
+    }
 }
+
 
 
 
