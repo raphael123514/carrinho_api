@@ -13,201 +13,140 @@ class CartItemsControllerTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
-    private array $validData = [];
+    private array $validData;
+    private const CART_ITEMS_ENDPOINT = '/api/cart-items';
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->validData = [
             'name' => 'test',
             'price' => 1,
-            'quantity' => 1
+            'quantity' => 1,
         ];
-        
-        parent::setUp();
+    }
+
+    private function createItem(array $data = null): int
+    {
+        $response = $this->postJson(self::CART_ITEMS_ENDPOINT, $data ?? $this->validData);
+        return $response->json('data.id');
     }
 
     public function test_create_item_successfully(): void
     {
-        $response = $this->postJson('/api/cart-items', $this->validData);
-
-        $response->assertStatus(201)
+        $this->postJson(self::CART_ITEMS_ENDPOINT, $this->validData)
+            ->assertCreated()
             ->assertJsonStructure([
-                'data' => [
-                    'id',
-                    'name',
-                    'price',
-                    'quantity',
-                    'created_at',
-                    'updated_at'
-                ]
+                'data' => ['id', 'name', 'price', 'quantity', 'created_at', 'updated_at']
             ]);
     }
 
     public function test_create_returns_correct_location_header(): void
     {
-        $response = $this->postJson('/api/cart-items', $this->validData);
-
-        $responseData = $response->json();
-        $itemId = $responseData['data']['id'];
+        $response = $this->postJson(self::CART_ITEMS_ENDPOINT, $this->validData);
+        $itemId = $response->json('data.id');
 
         $response->assertHeader('Location', route('cart-items.show', $itemId));
     }
-    
-     /**
+
+    /**
      * @dataProvider requiredFieldsProvider
      */
     public function test_create_validation_requires_fields(string $field, mixed $invalidValue): void
     {
-        $invalidData = $this->validData;
-        $invalidData[$field] = $invalidValue;
+        $data = $this->validData;
+        $data[$field] = $invalidValue;
 
-        $response = $this->postJson('/api/cart-items', $invalidData);
-
-        $response->assertStatus(422) // HTTP 422 Unprocessable Entity
-            ->assertJsonValidationErrors([$field]);
+        $this->postJson(self::CART_ITEMS_ENDPOINT, $data)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors($field);
     }
 
     public static function requiredFieldsProvider(): array
     {
         return [
-            'name is required' => ['name', null],
-            'name must be string' => ['name', 123],
-            'price is required' => ['price', null],
-            'price must be numeric' => ['price', 'texto'],
-            'quantity is required' => ['quantity', null],
-            'quantity must be integer' => ['quantity', 'texto'],
-            'quantity must be positive' => ['quantity', -1],
+            ['name', null],
+            ['name', 123],
+            ['price', null],
+            ['price', 'texto'],
+            ['quantity', null],
+            ['quantity', 'texto'],
+            ['quantity', -1],
         ];
     }
 
     public function test_show_returns_item_successfully(): void
     {
-        // Create an item first
-        $response = $this->postJson('/api/cart-items', $this->validData);
-        $itemId = $response->json('data.id');
-    
-        $showResponse = $this->getJson('/api/cart-items/' . $itemId);
-    
-        $showResponse->assertStatus(201)
+        $itemId = $this->createItem();
+
+        $this->getJson(self::CART_ITEMS_ENDPOINT. "/{$itemId}")
+            ->assertStatus(201)
             ->assertJsonStructure([
-                'data' => [
-                    'id',
-                    'name',
-                    'price',
-                    'quantity',
-                    'created_at',
-                    'updated_at'
-                ]
+                'data' => ['id', 'name', 'price', 'quantity', 'created_at', 'updated_at']
             ])
             ->assertHeader('Location', route('cart-items.show', $itemId));
     }
-    
+
     public function test_show_returns_404_for_nonexistent_item(): void
     {
-        $nonExistentId = 999999;
-        $response = $this->getJson('/api/cart-items/' . $nonExistentId);
-    
-        $response->assertStatus(404);
+        $this->getJson(self::CART_ITEMS_ENDPOINT . '/999999')->assertNotFound();
     }
 
     public function test_update_item_successfully(): void
     {
-        // Create an item first
-        $createResponse = $this->postJson('/api/cart-items', $this->validData);
-        $itemId = $createResponse->json('data.id');
-    
+        $itemId = $this->createItem();
+
         $updateData = [
             'name' => 'updated name',
             'price' => 10.5,
-            'quantity' => 2
+            'quantity' => 2,
         ];
-    
-        $response = $this->putJson('/api/cart-items/' . $itemId, $updateData);
-    
-        $response->assertStatus(200)
-            ->assertJson([
-                'data' => [
-                    'id' => $itemId,
-                    'name' => 'updated name',
-                    'price' => 10.5,
-                    'quantity' => 2,
-                ]
-            ])
+
+        $this->putJson(self::CART_ITEMS_ENDPOINT. "/{$itemId}", $updateData)
+            ->assertOk()
+            ->assertJson(['data' => ['id' => $itemId] + $updateData])
             ->assertHeader('Location', route('cart-items.show', $itemId));
     }
-    
+
     public function test_update_returns_404_for_nonexistent_item(): void
     {
-        $nonExistentId = 999999;
-        $updateData = [
-            'name' => 'does not matter',
-            'price' => 5,
-            'quantity' => 1
-        ];
-    
-        $response = $this->putJson('/api/cart-items/' . $nonExistentId, $updateData);
-    
-        $response->assertStatus(404);
+        $this->putJson(self::CART_ITEMS_ENDPOINT.'/999999', $this->validData)->assertNotFound();
     }
-    
+
     /**
      * @dataProvider updateRequiredFieldsProvider
      */
     public function test_update_validation_requires_fields(string $field, mixed $invalidValue): void
     {
-        // Create an item first
-        $createResponse = $this->postJson('/api/cart-items', $this->validData);
-        $itemId = $createResponse->json('data.id');
+        $itemId = $this->createItem();
+        $data = $this->validData;
+        $data[$field] = $invalidValue;
 
-        $updateData = $this->validData;
-        $updateData[$field] = $invalidValue;
-
-        $response = $this->putJson('/api/cart-items/' . $itemId, $updateData);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors([$field]);
+        $this->putJson(self::CART_ITEMS_ENDPOINT . "/{$itemId}", $data)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors($field);
     }
 
     public static function updateRequiredFieldsProvider(): array
     {
-        return [
-            'name is required' => ['name', null],
-            'name must be string' => ['name', 123],
-            'price is required' => ['price', null],
-            'price must be numeric' => ['price', 'texto'],
-            'quantity is required' => ['quantity', null],
-            'quantity must be integer' => ['quantity', 'texto'],
-            'quantity must be positive' => ['quantity', -1],
-        ];
+        return self::requiredFieldsProvider();
     }
-    
+
     public function test_index_returns_paginated_items(): void
     {
-        // Create multiple items
-        $items = [
+        foreach ([
             ['name' => 'item1', 'price' => 10, 'quantity' => 1],
             ['name' => 'item2', 'price' => 20, 'quantity' => 2],
             ['name' => 'item3', 'price' => 30, 'quantity' => 3],
-        ];
-    
-        foreach ($items as $item) {
-            $this->postJson('/api/cart-items', $item);
+        ] as $item) {
+            $this->postJson(self::CART_ITEMS_ENDPOINT, $item);
         }
-    
-        $response = $this->getJson('/api/cart-items?per_page=2');
 
-        $response->assertStatus(200)
+        $this->getJson(self::CART_ITEMS_ENDPOINT. '?per_page=2')
+            ->assertOk()
             ->assertJsonStructure([
-                'data' => [
-                    '*' => [
-                        'id',
-                        'name',
-                        'price',
-                        'quantity',
-                        'created_at',
-                        'updated_at'
-                    ]
-                ],
+                'data' => [['id', 'name', 'price', 'quantity', 'created_at', 'updated_at']],
                 'links',
                 'meta'
             ])
@@ -216,7 +155,7 @@ class CartItemsControllerTest extends TestCase
             ->assertJsonPath('meta.current_page', 1)
             ->assertJsonPath('meta.last_page', 2);
     }
-    
+
     /**
      * @dataProvider filterProvider
      */
@@ -226,107 +165,67 @@ class CartItemsControllerTest extends TestCase
         array $expectedPresent,
         array $expectedMissing
     ): void {
-        // Create test items
         foreach ($items as $item) {
-            $this->postJson('/api/cart-items', $item);
+            $this->postJson(self::CART_ITEMS_ENDPOINT, $item);
         }
-    
-        // Apply filter
-        $queryString = http_build_query($filter);
-        $response = $this->getJson("/api/cart-items?{$queryString}");
-    
-        // Assert response
-        $response->assertStatus(200);
-        
-        // Assert items that should be present
+
+        $query = http_build_query($filter);
+        $response = $this->getJson(self::CART_ITEMS_ENDPOINT. "?{$query}");
+
+        $response->assertOk();
+
         foreach ($expectedPresent as $present) {
             $response->assertJsonFragment($present);
         }
-        
-        // Assert items that should be missing
+
         foreach ($expectedMissing as $missing) {
             $response->assertJsonMissing($missing);
         }
     }
-    
+
     public static function filterProvider(): array
     {
         return [
             'filter by name' => [
                 'items' => [
-                    [
-                        'name' => 'Apple',
-                        'price' => 5,
-                        'quantity' => 1
-                    ],
-                    [
-                        'name' => 'Banana',
-                        'price' => 3,
-                        'quantity' => 2
-                    ]
+                    ['name' => 'Apple', 'price' => 5, 'quantity' => 1],
+                    ['name' => 'Banana', 'price' => 3, 'quantity' => 2],
                 ],
                 'filter' => ['name' => 'Apple'],
                 'expectedPresent' => [['name' => 'Apple']],
-                'expectedMissing' => [['name' => 'Banana']]
+                'expectedMissing' => [['name' => 'Banana']],
             ],
             'filter by price' => [
                 'items' => [
-                    [
-                        'name' => 'Apple',
-                        'price' => 5,
-                        'quantity' => 1
-                    ],
-                    [
-                        'name' => 'Banana',
-                        'price' => 3,
-                        'quantity' => 2
-                    ]
+                    ['name' => 'Apple', 'price' => 5, 'quantity' => 1],
+                    ['name' => 'Banana', 'price' => 3, 'quantity' => 2],
                 ],
                 'filter' => ['price' => 5],
                 'expectedPresent' => [['name' => 'Apple', 'price' => 5]],
-                'expectedMissing' => [['name' => 'Banana', 'price' => 3]]
+                'expectedMissing' => [['name' => 'Banana', 'price' => 3]],
             ],
             'filter by quantity' => [
                 'items' => [
-                    [
-                        'name' => 'Apple',
-                        'price' => 5,
-                        'quantity' => 1
-                    ],
-                    [
-                        'name' => 'Banana',
-                        'price' => 3,
-                        'quantity' => 2
-                    ]
+                    ['name' => 'Apple', 'price' => 5, 'quantity' => 1],
+                    ['name' => 'Banana', 'price' => 3, 'quantity' => 2],
                 ],
                 'filter' => ['quantity' => 2],
                 'expectedPresent' => [['name' => 'Banana', 'quantity' => 2]],
-                'expectedMissing' => [['name' => 'Apple', 'quantity' => 1]]
+                'expectedMissing' => [['name' => 'Apple', 'quantity' => 1]],
             ]
         ];
     }
 
     public function test_destroy_deletes_item_successfully(): void
     {
-        // Create an item first
-        $createResponse = $this->postJson('/api/cart-items', $this->validData);
-        $itemId = $createResponse->json('data.id');
-    
-        // Delete the item
-        $deleteResponse = $this->deleteJson('/api/cart-items/' . $itemId);
-    
-        $deleteResponse->assertNoContent();
-    
-        // Ensure the item no longer exists
-        $this->getJson('/api/cart-items/' . $itemId)
-            ->assertStatus(404);
+        $itemId = $this->createItem();
+
+        $this->deleteJson(self::CART_ITEMS_ENDPOINT. "/{$itemId}")->assertNoContent();
+        $this->getJson(self::CART_ITEMS_ENDPOINT. "/{$itemId}")->assertNotFound();
     }
-    
+
     public function test_destroy_returns_404_for_nonexistent_item(): void
     {
-        $nonExistentId = 999999;
-        $response = $this->deleteJson('/api/cart-items/' . $nonExistentId);
-    
-        $response->assertStatus(404);
+        $this->deleteJson(self::CART_ITEMS_ENDPOINT. '/999999')->assertNotFound();
     }
 }
