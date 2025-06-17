@@ -305,7 +305,7 @@ class CartItemsControllerTest extends TestCase
             ]
         ];
     }
-    
+
     public function test_destroy_deletes_item_successfully(): void
     {
         // Create an item first
@@ -330,7 +330,3 @@ class CartItemsControllerTest extends TestCase
         $response->assertStatus(404);
     }
 }
-
-
-
-
