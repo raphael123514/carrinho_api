@@ -88,7 +88,7 @@ class CartItemsControllerTest extends TestCase
             ->assertHeader('Location', route('cart-items.show', $itemId));
     }
 
-    public function test_show_returns_404_for_nonexistent_item(): void
+    public function test_show_returns_404_for_none_existent_item(): void
     {
         $this->getJson(self::CART_ITEMS_ENDPOINT . '/999999')->assertNotFound();
     }
