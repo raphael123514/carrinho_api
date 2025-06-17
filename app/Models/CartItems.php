@@ -53,4 +53,55 @@ class CartItems extends Model
         $item->update($validatedData);
         return $item->fresh();
     }
+
+    /**
+     * Get all cart items with pagination
+     *
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    /**
+     * Apply filters to the query
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param array $filters
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function applyFilters($query, array $filters)
+    {
+        $filterableFields = [
+            'name' => fn($value) => ['like', "%{$value}%"],
+            'price' => fn($value) => ['=', $value],
+            'quantity' => fn($value) => ['=', $value],
+            'created_at' => fn($value) => ['>=', $value],
+        ];
+
+        foreach ($filters as $field => $value) {
+            if (isset($filterableFields[$field])) {
+                [$operator, $filterValue] = $filterableFields[$field]($value);
+                $query->where($field, $operator, $filterValue);
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * Get all cart items with filters
+     *
+     * @param array $filters
+     * @param int $perPage
+     * @param int|null $page
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getAllItems(array $filters = [], int $perPage = 15, ?int $page = null)
+    {
+        $query = static::query();
+        return $this->applyFilters($query, $filters)->paginate(
+            $perPage,
+            ['*'],
+            'page',
+            $page
+        );
+    }
 }

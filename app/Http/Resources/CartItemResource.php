@@ -12,7 +12,7 @@ class CartItemResource extends JsonResource
      *
      * @return array<string, mixed>
      */
-    public function to(Request $request): array
+    public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,

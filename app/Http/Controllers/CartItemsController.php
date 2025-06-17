@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexCartItemRequest;
 use App\Http\Requests\CreateCartItemRequest;
 use App\Http\Requests\UpdateCartItemRequest;
+use App\Http\Resources\CartItemCollection;
 use App\Http\Resources\CartItemResource;
 use App\Models\CartItems;
-use App\Models\Items;
-use Illuminate\Http\Request;
 
 class CartItemsController extends Controller
 {
@@ -21,9 +21,19 @@ class CartItemsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(IndexCartItemRequest $request)
     {
-        //
+        $filters = $request->validated();
+        $perPage = (int) $request->input('per_page', 15);
+        $page = $request->input('page') ? (int) $request->input('page') : null;
+        
+        $items = $this->cartItems->getAllItems(
+            filters: array_filter($filters, fn($value) => $value !== null),
+            perPage: $perPage,
+            page: $page
+        );
+        
+        return new CartItemCollection($items);
     }
 
     /**
