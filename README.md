@@ -59,3 +59,64 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+# Carrinho API
+
+Este projeto é uma API RESTful desenvolvida em Laravel 12, utilizando o [Laravel Sail](https://laravel.com/docs/12.x/sail) para facilitar o ambiente de desenvolvimento com Docker.
+
+## Pré-requisitos
+- Docker instalado e rodando
+- Docker Compose instalado
+
+## Passos para subir o projeto
+
+1. **Copie o arquivo de variáveis de ambiente:**
+   ```sh
+   cp .env.example .env
+   ```
+
+2. **Instale as dependências do Composer:**
+   ```sh
+   ./vendor/bin/sail composer install
+   ```
+   > Se ainda não tiver o Sail instalado, rode:
+   > ```sh
+   > composer require laravel/sail --dev
+   > php artisan sail:install
+   > ```
+
+3. **Suba os containers:**
+   ```sh
+   ./vendor/bin/sail up -d
+   ```
+
+4. **Gere a key do Laravel:**
+   ```sh
+   ./vendor/bin/sail artisan key:generate
+   ```
+
+5. **Rode as migrations:**
+   ```sh
+   ./vendor/bin/sail artisan migrate
+   ```
+
+6. **Acesse a API:**
+   - Acesse [http://localhost](http://localhost) no navegador ou utilize ferramentas como Postman/Insomnia para consumir os endpoints.
+
+## Comandos úteis
+- Parar os containers:
+  ```sh
+  ./vendor/bin/sail down
+  ```
+- Acessar o container:
+  ```sh
+  ./vendor/bin/sail shell
+  ```
+- Rodar testes:
+  ```sh
+  ./vendor/bin/sail artisan test
+  ```
+
+---
+
+Para mais informações, consulte a [documentação oficial do Laravel Sail](https://laravel.com/docs/12.x/sail).
