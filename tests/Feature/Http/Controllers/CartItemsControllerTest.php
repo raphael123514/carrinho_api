@@ -2,8 +2,6 @@
 
 namespace Tests\Feature\Http\Controllers;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 /**
@@ -11,7 +9,6 @@ use Tests\TestCase;
  */
 class CartItemsControllerTest extends TestCase
 {
-    use RefreshDatabase, WithFaker;
 
     private array $validData;
     private const CART_ITEMS_ENDPOINT = '/api/cart-items';
