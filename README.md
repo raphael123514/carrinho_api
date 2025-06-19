@@ -64,6 +64,140 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 Este projeto é uma API RESTful desenvolvida em Laravel 12, utilizando o [Laravel Sail](https://laravel.com/docs/12.x/sail) para facilitar o ambiente de desenvolvimento com Docker.
 
+# Endpoints da API
+
+Abaixo estão listadas as principais rotas RESTful disponíveis nesta API, exemplos de uso e payloads esperados.
+
+## Cart Items
+
+| Método | Rota                | Descrição                        |
+|--------|---------------------|----------------------------------|
+| GET    | /api/cart-items     | Lista todos os itens do carrinho |
+| POST   | /api/cart-items     | Cria um novo item no carrinho    |
+| GET    | /api/cart-items/{id}| Detalha um item do carrinho      |
+| PUT    | /api/cart-items/{id}| Atualiza um item do carrinho     |
+| DELETE | /api/cart-items/{id}| Remove um item do carrinho       |
+
+### Exemplo: Criar item no carrinho
+
+**POST /api/cart-items**
+```json
+{
+  "name": "Produto X",
+  "price": 99.90,
+  "quantity": 2
+}
+```
+
+**Resposta 201**
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "Produto X",
+    "price": 99.9,
+    "quantity": 2,
+    "created_at": "2025-06-18 12:00:00",
+    "updated_at": "2025-06-18 12:00:00"
+  }
+}
+```
+
+### Exemplo: Listar itens do carrinho
+
+**GET /api/cart-items**
+
+**Resposta 200**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Produto X",
+      "price": 99.9,
+      "quantity": 2,
+      "created_at": "2025-06-18 12:00:00",
+      "updated_at": "2025-06-18 12:00:00"
+    }
+  ]
+}
+```
+
+### Exemplo: Atualizar item do carrinho
+
+**PUT /api/cart-items/1**
+```json
+{
+  "quantity": 3
+}
+```
+
+### Exemplo: Remover item do carrinho
+
+**DELETE /api/cart-items/1**
+
+**Resposta:** 204 No Content
+
+---
+
+## Pagamento
+
+| Método | Rota         | Descrição                |
+|--------|--------------|--------------------------|
+| POST   | /api/payment | Processa um pagamento    |
+
+### Exemplo: Pagamento com PIX
+
+**POST /api/payment**
+```json
+{
+  "payment_method": "pix",
+  "qtd_installments": 1
+}
+```
+
+**Resposta 200**
+```json
+{
+  "message": "Pix payment processed successfully",
+  "data": {
+    "payment_method": "pix",
+    "qtd_installments": 1,
+    "amount": 89.91
+  }
+}
+```
+
+### Exemplo: Pagamento com Cartão de Crédito
+
+**POST /api/payment**
+```json
+{
+  "payment_method": "credit_card",
+  "qtd_installments": 2,
+  "card_information": {
+    "card_holder_name": "Test User",
+    "card_number": "4111111111111111",
+    "expiration_date": "12/25",
+    "cvv": "123"
+  }
+}
+```
+
+**Resposta 200**
+```json
+{
+  "message": "Credit card payment processed successfully",
+  "data": {
+    "payment_method": "credit_card",
+    "qtd_installments": 2,
+    "amount": 199.80
+  }
+}
+```
+
+> Os campos de cartão são obrigatórios apenas quando `payment_method` for `credit_card`.
+
 ## Pré-requisitos
 - Docker instalado e rodando
 - Docker Compose instalado
