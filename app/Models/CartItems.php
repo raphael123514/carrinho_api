@@ -117,4 +117,19 @@ class CartItems extends Model
             $page
         );
     }
+
+    /**
+     * Calculates and returns the total price of all cart items.
+     *
+     * This method sums the product of the price and quantity for each cart item
+     * in the database and returns the total value.
+     *
+     * @return float|null The total price of all cart items, or null if there are no items.
+     */
+    public static function getTotalPrice()
+    {
+        return static::query()
+            ->selectRaw('SUM(price * quantity) as total')
+            ->value('total');
+    }
 }
